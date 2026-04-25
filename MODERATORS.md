@@ -39,7 +39,7 @@ Everything installed on the server and what it does. If you hit a command you do
 | **Chunky** | 1.4.40 | World pre-generation for perf | `/chunky start`, `/chunky pause`, `/chunky status` |
 | **ChariotStarterKit** | 0.1.0 | First-join starter kit (auto-expires) | *(automatic; no commands yet)* |
 | **ChariotBuildAI** | 0.1.0 | Natural-language builder (Claude API) | `/ai <prompt>`, `/ai <model> <prompt>`, `/ai undo`, `/ai models` |
-| **ChariotSafeRooms** | 0.1.0 | Permanent bedrock-layer safe rooms + decor box system | `/safe`, `/saferoom info`, `/saferoom assign|unassign|list|reload|decortemplate|givedecor`, `/createdecorchest` |
+| **ChariotSafeRooms** | 0.1.0 | Permanent bedrock-layer safe rooms + decor box system | `/safe`, `/saferoom info`, `/saferoom assign\|unassign\|list\|reload\|decortemplate\|givedecor`, `/createdecorchest` |
 | **ChariotKeyShop** | 0.1.0 | Key-tier loot shop, chars currency, chest-linked tier shops | `/keys`, `/keyshop`, `/chars`, `/buykey`, `/keyshop <tier>template`, `/keyshop link|unlink` |
 
 ---
@@ -178,12 +178,14 @@ Describe a structure in English; the server calls the Claude API and places bloc
 
 ChariotSafeRooms manages the 10×10×10 private rooms players buy on the Tebex store. Rooms live at the bedrock layer (y=−63..−52). Walls are indestructible (BlockBreak/Place/Explode/Piston/LiquidFlow all cancelled by the plugin — even ops can't break them). Owners can build inside their own room; non-owners cannot place blocks there. PvP is disabled inside any safe room.
 
+There's only one purchasable size (10×10×10). The plugin still supports `medium`/`large` tiers internally for special hand-crafted rooms (e.g., `custom_ethan`), but those aren't sold.
+
 | Command | Who | What it does |
 |---|---|---|
 | `/safe` | Anyone | Teleport to your owned room. Tells you "buy one at the store" if you don't own one. |
 | `/saferoom info` | Anyone | Print your room id and spawn coords. |
-| `/saferoom list` | Admin | Tier counts: how many small/medium/large rooms exist and how many are owned. |
-| `/saferoom assign <player> <small\|medium\|large>` | Admin | Pull the next free room from the tier and bind it to the player. This is what the Tebex on-purchase command runs. |
+| `/saferoom list` | Admin | Tier counts: how many rooms exist and how many are owned. |
+| `/saferoom assign <player>` | Admin | Pull the next free safe room and bind it to the player. This is what the Tebex on-purchase command runs. |
 | `/saferoom unassign <player>` | Admin | Release a player's room back to the free pool. |
 | `/saferoom reload` | Admin | Re-read `rooms.yml` + `owners.yml` from disk. |
 | `/saferoom decortemplate` | Admin | Look at a chest within 8 blocks; saves its contents as the Decor Box recipe (`plugins/ChariotSafeRooms/decor_template.yml`). Re-run anytime to update. |

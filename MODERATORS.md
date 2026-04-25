@@ -40,7 +40,8 @@ Everything installed on the server and what it does. If you hit a command you do
 | **ChariotStarterKit** | 0.1.0 | First-join starter kit (auto-expires) | *(automatic; no commands yet)* |
 | **ChariotBuildAI** | 0.1.0 | Natural-language builder (Claude API) | `/ai <prompt>`, `/ai <model> <prompt>`, `/ai undo`, `/ai models` |
 | **ChariotSafeRooms** | 0.1.0 | Permanent bedrock-layer safe rooms + decor box system | `/safe`, `/saferoom info`, `/saferoom assign\|unassign\|list\|reload\|decortemplate\|givedecor`, `/createdecorchest` |
-| **ChariotKeyShop** | 0.1.0 | Key-tier loot shop, chars currency, chest-linked tier shops | `/keys`, `/keyshop`, `/chars`, `/buykey`, `/keyshop <tier>template`, `/keyshop link|unlink` |
+| **ChariotKeyShop** | 0.1.0 | Key-tier loot shop, chars currency, chest-linked tier shops | `/keys`, `/keyshop`, `/chars`, `/buykey`, `/keyshop <tier>template`, `/keyshop link\|unlink` |
+| **ChariotGoldenEgg** | 0.1.0 | Random treasure-hunt event — chest spawns somewhere on the map every 30-90 min | `/goldenegg status\|drop\|cancel\|reload` |
 
 ---
 
@@ -238,6 +239,60 @@ To revert a tier to the legacy `tiers:` config in `config.yml`: delete the corre
 | `/keyshop unlink` | Admin: removes the link from the chest you're looking at. |
 
 Used at the admin sky vault to make the four template chests double as a working storefront preview.
+
+### Admin Sky Vault — at `0, 309, 0`
+
+A 12×12×12 stone-brick room at the world ceiling that holds the canonical template chests. **Indestructible** — no player or op can break it (registered as `admin_vault` in `rooms.yml` with a 1×1 dummy interior, so the entire envelope is treated as a wall and the ChariotSafeRooms wall-protection handlers cancel every break/place/explode/piston/liquid-flow event inside).
+
+**Get there:** `/tp 0 309 0` (op) — no warp set up yet, ask if you want one.
+
+**What's inside:**
+
+| Chest | Purpose | Linked to |
+|---|---|---|
+| **COMMON** at (-4, 309, -3) | Loot template for the Common key | `/keyshop common` (right-click opens shop GUI) |
+| **GOLD** at (-2, 309, -3) | Loot template for the Gold key | `/keyshop gold` |
+| **PRIME** at (0, 309, -3) | Loot template for the Prime key | `/keyshop prime` |
+| **MYTHICAL** at (2, 309, -3) | Loot template for the Mythical key | `/keyshop mythical` |
+| **DECOR** (when added) at (4, 309, -3) | Loot template for the Decor Box shulker | Used by `/saferoom givedecor` |
+
+**Day-to-day workflow inside the vault:**
+
+1. **Edit a tier's loot:** open the relevant chest, change items, look at it, run `/keyshop <tier>template` (e.g. `/keyshop goldtemplate`). Saves to `plugins/ChariotKeyShop/templates/<tier>.yml` and reloads instantly. Right-clicking the linked chest now serves the new loot.
+2. **Re-link a chest** (e.g. after rebuilding the vault): look at the chest, run `/keyshop link <tier>`. Persisted in `chest_links.yml`.
+3. **Edit decor box loot:** open the decor chest, change items, run `/saferoom decortemplate`. Then `/saferoom givedecor <player>` mints a tagged shulker for them.
+4. **Drop a fresh decor reference chest:** look at where you want it placed, run `/createdecorchest` — places a chest above the looked-at block, populated from the template, with a "DECOR" sign on top.
+
+The right-click → keyshop-GUI behaviour comes from `/keyshop link <tier>`. If you ever break/replace a template chest you'll need to re-link it (its block coords change in `chest_links.yml`).
+
+### Golden Egg event (`/goldenegg`)
+
+A random treasure-hunt event. Every 30-90 minutes a chest spawns at a random surface location somewhere within ±5000 of origin (excluding the central ±600 safe-rooms exclusion zone). World chat broadcasts the coords + contents. First player to right-click claims it.
+
+**Mechanics:**
+- Initial loot pool: one of `egg`, `cooked beef (renamed "Hearty Steak")`, or `netherite pickaxe`. Item is randomly picked at the start of a cycle.
+- Box starts with 10 chars in addition to the item.
+- Right-click claim → player gets the item + chars (granted via ChariotKeyShop's `addChars` API). Cycle resets.
+- If unclaimed for 30 minutes, the chest disappears, +10 chars accumulate (item persists), 30-min cooldown, then redrops at a new location.
+- Chest is unbreakable until claimed (ops included). Pistons/explosions/lava can't move or destroy it.
+- State persists across server restarts (`plugins/ChariotGoldenEgg/state.yml`).
+
+**Admin commands:**
+
+| Command | What it does |
+|---|---|
+| `/goldenegg status` | Show whether the egg is active, current location/chars/item if so |
+| `/goldenegg drop` | Force an immediate drop (ignored if already active) |
+| `/goldenegg cancel` | Remove the active egg without paying out chars; schedules next drop |
+| `/goldenegg reload` | Reload `plugins/ChariotGoldenEgg/config.yml` |
+
+The item pool is editable in `plugins/ChariotGoldenEgg/config.yml` → `item-pool`. A `/goldenegg savetemplate` command (snapshot a chest to populate the pool) and `/goldenegg place` (spawn a reference chest in the admin vault) are planned but not implemented yet.
+
+### Random teleport (`/rtp`)
+
+Aliased to Essentials' native `/tpr`. Center: (0, 0). Min range: 600 blocks (clears the safe-rooms exclusion). Max range: 5000 (well inside the 10,100-block world border). Excludes ocean/river biomes by default. Permission `essentials.tpr` is granted to the `default` group, so anyone can use it.
+
+To change the bounds, run in-game: `/settpr center <x> <z>`, `/settpr minrange <n>`, `/settpr maxrange <n>`. Console can't run `/settpr` (it requires a player context).
 
 ---
 
